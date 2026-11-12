@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Minutnik Pomodoro</title>
+    <style>
+        :root {
+            --primary: #e74c3c;
+            --primary-bg: #fdf2f0;
+            --break-color: #27ae60;
+            --break-bg: #eafaf1;
+            --long-break-color: #2980b9;
+            --long-break-bg: #ebf5fb;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: background-color 0.4s ease;
+        }
+
+        body.mode-break {
+            background-color: var(--break-bg);
+        }
+
+        body.mode-long-break {
+            background-color: var(--long-break-bg);
+        }
+
+        .container {
+            background: #ffffff;
+            padding: 2.5rem;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            width: 90%;
+            max-width: 420px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.4rem 1.2rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            background-color: var(--primary-bg);
+            color: var(--primary);
+            transition: all 0.3s;
+        }
+
+        body.mode-break .status-badge {
+            background-color: var(--break-bg);
+            color: var(--break-color);
+        }
+
+        body.mode-long-break .status-badge {
+            background-color: var(--long-break-bg);
+            color: var(--long-break-color);
+        }
+
+        .timer-display {
+            font-size: 4.8rem;
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+            margin: 1rem 0 1.5rem;
+            letter-spacing: 2px;
+        }
+
+        .cycles-info {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .cycles-dots {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            transition: background 0.3s;
+        }
+
+        .dot.active {
+            background: var(--primary);
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+        }
+
+        button {
+            border: none;
+            outline: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        button:active {
+            transform: scale(0.97);
+        }
+
+        .btn-start {
+            background: var(--primary);
+            color: white;
+        }
+
+        body.mode-break .btn-start {
+            background: var(--break-color);
+        }
+
+        body.mode-long-break .btn-start {
+            background: var(--long-break-color);
+        }
+
+        .btn-pause {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-start:hover { opacity: 0.9; }
+        .btn-pause:hover { opacity: 0.9; }
+        .btn-reset:hover { opacity: 0.9; }
+
+        .quick-test {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .btn-test {
+            margin-top: 0.5rem;
+            padding: 0.3rem 0.8rem;
+            font-size: 0.8rem;
+            background: #ecf0f1;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Minutnik Pomodoro</h1>
+        <div id="status" class="status-badge">Praca (Skupienie)</div>
+
+        <div id="timer" class="timer-display">25:00</div>
+
+        <div class="cycles-info">
+            Ukończone cykle: <strong id="cycleCount">0</strong> / 4
+            <div class="cycles-dots">
+                <span class="dot" id="dot1"></span>
+                <span class="dot" id="dot2"></span>
+                <span class="dot" id="dot3"></span>
+                <span class="dot" id="dot4"></span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="btnStart" class="btn-start">Start</button>
+            <button id="btnPause" class="btn-pause">Pauza</button>
+            <button id="btnReset" class="btn-reset">Reset</button>
+        </div>
+
+        <div class="quick-test">
+            <button id="btnTestSkip" class="btn-test">Przyspiesz (test: 3s)</button>
+        </div>
+    </div>
+
+    <script>
+        const WORK_TIME = 25 * 60;
+        const SHORT_BREAK_TIME = 5 * 60;
+        const LONG_BREAK_TIME = 15 * 60;
+
+        let timeLeft = WORK_TIME;
+        let timerId = null;
+        let isRunning = false;
+        let mode = 'work'; // 'work', 'shortBreak', 'longBreak'
+        let completedCycles = 0;
+
+        const timerDisplay = document.getElementById('timer');
+        const statusDisplay = document.getElementById('status');
+        const cycleCountDisplay = document.getElementById('cycleCount');
+        const btnStart = document.getElementById('btnStart');
+        const btnPause = document.getElementById('btnPause');
+        const btnReset = document.getElementById('btnReset');
+        const btnTestSkip = document.getElementById('btnTestSkip');
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timerDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.title = `${timerDisplay.textContent} - Minutnik Pomodoro`;
+        }
+
+        function updateDots() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (i <= completedCycles % 4 || (completedCycles > 0 && completedCycles % 4 === 0 && mode !== 'work')) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            }
+        }
+
+        function setMode(newMode) {
+            mode = newMode;
+            document.body.className = '';
+
+            if (mode === 'work') {
+                timeLeft = WORK_TIME;
+                statusDisplay.textContent = 'Praca (Skupienie)';
+            } else if (mode === 'shortBreak') {
+                document.body.classList.add('mode-break');
+                timeLeft = SHORT_BREAK_TIME;
+                statusDisplay.textContent = 'Krótka przerwa (5 min)';
+            } else if (mode === 'longBreak') {
+                document.body.classList.add('mode-long-break');
+                timeLeft = LONG_BREAK_TIME;
+                statusDisplay.textContent = 'Długa przerwa (15 min)';
+            }
+            updateDisplay();
+            updateDots();
+        }
+
+        function handleTimerComplete() {
+            clearInterval(timerId);
+            isRunning = false;
+
+            if (mode === 'work') {
+                completedCycles++;
+                cycleCountDisplay.textContent = completedCycles;
+                if (completedCycles % 4 === 0) {
+                    setMode('longBreak');
+                } else {
+                    setMode('shortBreak');
+                }
+            } else {
+                // Po zakończeniu przerwy powrót do pracy
+                setMode('work');
+            }
+            startTimer();
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            isRunning = true;
+            timerId = setInterval(() => {
+                if (timeLeft > 0) {
+                    timeLeft--;
+                    updateDisplay();
+                } else {
+                    handleTimerComplete();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            if (!isRunning) return;
+            clearInterval(timerId);
+            isRunning = false;
+        }
+
+        function resetTimer() {
+            clearInterval(timerId);
+            isRunning = false;
+
+            // Reset bieżącego trybu (w środku przerwy czas wraca do początku przerwy,
+            // licznik ukończonych cykli pozostaje bez zmian).
+            if (mode === 'work') {
+                timeLeft = WORK_TIME;
+            } else if (mode === 'shortBreak') {
+                timeLeft = SHORT_BREAK_TIME;
+            } else if (mode === 'longBreak') {
+                timeLeft = LONG_BREAK_TIME;
+            }
+            updateDisplay();
+        }
+
+        btnStart.addEventListener('click', startTimer);
+        btnPause.addEventListener('click', pauseTimer);
+        btnReset.addEventListener('click', resetTimer);
+
+        btnTestSkip.addEventListener('click', () => {
+            timeLeft = 3;
+            updateDisplay();
+        });
+
+        // Inicjalizacja
+        updateDisplay();
+        updateDots();
+    </script>
+</body>
+</html>
