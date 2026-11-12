@@ -49,3 +49,26 @@
 - **Trwałość sesji:** Czy po przypadkowym zamknięciu lub odświeżeniu karty aplikacja powinna wznawiać odliczanie z `localStorage`?
 - **Sygnalizacja dźwiękowa:** Jaki rodzaj dźwięku i o jakiej głośności ma informować o końcu cyklu przy zminimalizowanej przeglądarce?
 - **Możliwość pominięcia przerwy:** Czy należy dodać przycisk „Pomiń przerwę”, gdy użytkownik chce pracować dalej bez czekania?
+
+
+---
+
+## 5. Dopiski po porównaniu z siedmioma zasadami z lekcji
+
+### Porównanie z 7 zasadami techniki Pomodoro
+Siedem reguł z lekcji o technice Pomodoro:
+1. *Zdefiniuj jedno konkretne zadanie przed startem sesji.*
+2. *Pracuj w pełnym skupieniu przez 25 minut bez rozpraszania się.*
+3. *Po 25 minutach pracy bezwzględnie zrób krótką przerwę (5 minut).*
+4. *Po 4 ukończonych cyklach pracy zrób dłuższą przerwę regeneracyjną (15–30 minut).*
+5. *Cykl Pomodoro jest niepodzielny – nie ma pauzowania na inne sprawy; jeśli przerwiesz pracę, cykl przepada.*
+6. *Pojawiające się rozpraszacze zapisuj natychmiast na liście rozpraszaczy na później i wracaj do zadania.*
+7. *Szanuj rytm cykli – blok pracy to wyłącznie praca, blok przerwy to pełen relaks, po czym cykl startuje na nowo.*
+
+### Ile udało się odtworzyć
+- **Udało się odtworzyć 5 z 7 zasad:** Mechanika programu w pełni odzwierciedla zasady 2, 3, 4 oraz rytm i resetowanie serii (zasada 7), a także zliczanie ukończonych cykli.
+- **Czego nie udało się odtworzyć z samego programu:** Program nie implementuje zasad 1 i 6 (definiowanie zadania oraz lista rozpraszaczy), ponieważ nie posiada modułu notatek ani interfejsu to-do. Ponadto obecność przycisku „Pauza” w programie stoi w sprzeczności z klasyczną zasadą 5 (niepodzielność pomodoro), gdyż pozwala użytkownikowi wstrzymać zegar bez unieważniania cyklu.
+
+### Co program robi w sytuacji, o której żadna z siedmiu zasad nie mówiła
+- **Sytuacja nieopisana w zasadach:** Żadna z 7 zasad nie precyzuje, co ma się stać z licznikiem cykli oraz stanem minutnika, gdy użytkownik naciśnie przycisk **„Reset” w środku trwania przerwy** (zarówno krótkiej, jak i długiej). Zasady skupiają się na ideale: ukończono 25 minut -> następuje przerwa -> powrót do pracy, nie uwzględniając przerwania samego odpoczynku.
+- **Zachowanie programu w tej sytuacji:** W obecnej implementacji programu naciśnięcie „Reset” w środku przerwy zatrzymuje odliczanie i resetuje czas bieżącej przerwy do jej pełnego wymiaru (05:00 dla krótkiej przerwy lub 15:00 dla długiej przerwy). **Licznik ukończonych cykli NIE zostaje skasowany** – zachowuje swoją dotychczasową wartość, a aplikacja pozostaje w trybie przerwowym.
